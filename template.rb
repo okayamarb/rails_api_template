@@ -1,20 +1,9 @@
 # coding: utf-8
 dir = File.dirname(__FILE__)
 
-gem 'slim-rails'
-gem 'simple_form', github: 'plataformatec/simple_form', branch: 'master'
 gem 'ransack'
 gem 'kaminari'
 gem 'active_decorator'
-
-use_bootstrap = if yes?('Use Bootstrap?')
-                  uncomment_lines 'Gemfile', "gem 'therubyracer'"
-                  gem 'less-rails'
-                  gem 'twitter-bootstrap-rails'
-                  true
-                else
-                  false
-                end
 
 use_unicorn = if yes?('Use unicorn?')
                 uncomment_lines 'Gemfile', "gem 'unicorn'"
@@ -49,48 +38,36 @@ use_heroku = if yes?('Use heroku?')
 
 gem_group :development, :test do
   gem 'rspec-rails'
-  gem "factory_girl_rails"
+  gem 'factory_girl_rails'
   gem 'capybara'
-  gem 'capybara-webkit'
+  gem 'pry-rails'
+  gem 'pry-doc'
+  gem 'pry-stack_explorer'
+  gem 'pry-byebug'
+  gem 'spring'
+  gem 'spring-commands-rspec'
+  gem 'poltergeist'
 end
 
 gem_group :development do
-  gem 'pry-rails'
   gem 'parallel_tests'
   gem 'better_errors'
-  gem "binding_of_caller"
+  gem 'binding_of_caller'
   gem 'spring'
   gem 'letter_opener'
   gem 'annotate'
 end
 
 gem_group :test do
-  gem 'database_cleaner'
+  gem 'database_rewinder'
   gem 'timecop'
   gem 'launchy'
   gem 'webmock', require: 'webmock/rspec'
 end
 
 run_bundle
-generate 'kaminari:config'
 generate 'rspec:install'
 remove_dir 'test'
-
-if use_bootstrap
-  generate 'bootstrap:install', 'less'
-  generate 'simple_form:install', '--bootstrap'
-  if yes?("Use responsive layout?")
-    generate 'bootstrap:layout', 'application fluid'
-  else
-    generate 'bootstrap:layout', 'application fixed'
-    append_to_file 'app/assets/stylesheets/application.css' do
-      "body { padding-top:60px }"
-    end
-  end
-  remove_file 'app/views/layouts/application.html.erb'
-else
-  generate 'simple_form:install'
-end
 
 # Application settings
 # ----------------------------------------------------------------
@@ -193,12 +170,6 @@ doc/
 EOS
 end
 
-# Root path settings
-# ----------------------------------------------------------------
-generate 'controller', 'home index'
-route "root to: 'home#index'"
-
-
 
 # Create directories
 # ----------------------------------------------------------------
@@ -265,7 +236,6 @@ if use_devise
   environment "config.action_mailer.default_url_options = { host: 'localhost:3000' }", env: 'development'
   environment "config.action_mailer.default_url_options = { host: 'localhost:3000' }", env: 'test'
   generate "devise #{devise_model}"
-  generate 'devise:views'
   git add: "."
   git commit: %Q{ -m 'Add devise model and views.' }
   if use_bitbucket

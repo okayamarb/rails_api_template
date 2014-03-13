@@ -8,6 +8,7 @@ require 'rspec/autorun'
 require 'capybara/rails'
 require 'capybara/rspec'
 require 'webmock/rspec'
+require 'capybara/poltergeist'
 WebMock.allow_net_connect!
 
 # Requires supporting ruby files with custom matchers and macros, etc,
@@ -46,7 +47,6 @@ RSpec.configure do |config|
   # include Warden::Test::Helpers
   # config.include Devise::TestHelpers, type: :controller
   # config.include Devise::TestHelpers, type: :view
-  config.include FeatureHelpers, type: :feature
 
   # ActiveDecorator
   config.include RSpec::Rails::DecoratorExampleGroup, type: :decorator, example_group: { file_path: config.escaped_path(%w[spec decorators])}
@@ -55,27 +55,25 @@ RSpec.configure do |config|
   config.before :each do
     # Devise
     # Warden.test_mode!
-    if Capybara.current_driver == :rack_test
-      DatabaseCleaner.strategy = :transaction
-    else
-      DatabaseCleaner.strategy = :truncation
-    end
     if example.metadata[:js]
       self.use_transactional_fixtures = false
     end
-    DatabaseCleaner.start
+    DatabaseRewinder.clean_all
   end
 
   config.after :each do
     # Devise
     # Warden.test_reset!
-    DatabaseCleaner.clean
+    DatabaseRewinder.clean
     if example.metadata[:js]
       self.use_transactional_fixtures = true
     end
   end
 
-  Capybara.javascript_driver = :webkit
+  Capybara.javascript_driver = :poltergeist
+  Capybara.register_driver :poltergeist do |app|
+    Capybara::Poltergeist::Driver.new(app, :js_errors => false, :timeout => 60, :phantomjs_options => ['--load-images=no', '--ignore-ssl-errors=yes'])
+  end
   Capybara.default_wait_time = 5
   Capybara.ignore_hidden_elements = true
   Capybara.asset_host = "http://localhost:3000"
